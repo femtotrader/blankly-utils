@@ -16,6 +16,7 @@ dash-auth = "^2.0.0"
 sqlalchemy = "^2.0.19"
 apscheduler = "^3.10.1"
 dash-bootstrap-components = "^1.4.2"
+pydantic = "^2.2.1"
 
 [build-system]
 requires = ["poetry-core"]
