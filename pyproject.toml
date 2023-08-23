@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "blankly-utils"
+version = "0.1.0"
+description = "Trading stategy utils for Blankly Finance"
+authors = ["c0indev3l <working4coins@gmail.com>"]
+readme = "README.md"
+packages = [{include = "blankly_utils"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+blankly = "^1.18.25b0"
+python-dotenv = "^1.0.0"
+click = "^8.1.6"
+dash = "^2.11.1"
+dash-auth = "^2.0.0"
+sqlalchemy = "^2.0.19"
+apscheduler = "^3.10.1"
+dash-bootstrap-components = "^1.4.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
