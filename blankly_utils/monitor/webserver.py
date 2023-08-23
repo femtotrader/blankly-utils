@@ -18,7 +18,7 @@ def MakeServerRequestHandler(token: str, strategy: Strategy, quoted: str):
             super().__init__(*args, **kwargs)
 
         def do_GET(self):
-            #print(self.client_address[0])
+            # print(self.client_address[0])
             parsed_url = urlparse(self.path)
             # print(parsed_url)
             received_token = parse_qs(parsed_url.query).get("token", None)

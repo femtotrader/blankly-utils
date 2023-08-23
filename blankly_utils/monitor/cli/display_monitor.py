@@ -59,7 +59,7 @@ print(VALID_USERNAME_PASSWORD_PAIRS)
     "MINTY, MORPH, PULSE, QUARTZ, SANDSTONE, SIMPLEX, SKETCHY, "
     "SLATE, SOLAR, SPACELAB, SUPERHERO, UNITED, VAPOR, YETI, ZEPHYR. "
     "See https://dash-bootstrap-components.opensource.faculty.ai/docs/themes/explorer/ "
-    "for more information"
+    "for more information",
 )
 def main(host, port, db_uri, quoted, refresh_sec, theme):
     # print("main")

@@ -58,6 +58,6 @@ def export_results(results, path="."):
             df_trades.to_excel(fname, index=False)
     del d_results["trades"]
 
-    #json_results = json.dumps(d_results)
+    # json_results = json.dumps(d_results)
     with open(path / "results.json", "w") as fd:
         json.dump(d_results, fd)

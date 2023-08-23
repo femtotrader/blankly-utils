@@ -2,7 +2,8 @@
 
 import click
 import os
-#from dotenv import dotenv_values
+
+# from dotenv import dotenv_values
 import warnings
 import datetime
 import requests
@@ -132,12 +133,12 @@ def process_account_values(verbose, url, token, db_uri):
 )
 @click.option("--verbose/--no-verbose", default=True, help="verbose")
 def main(url, token, db_uri, schedule, seconds, crontab, verbose):
-    #warnings.warn("H"* 100)
+    # warnings.warn("H"* 100)
     print(f"Connect to {url}")
     print(f"Store to {db_uri}")
     if token == "":
-        #config = dotenv_values(".env")
-        #token = config["RUN_ID"]
+        # config = dotenv_values(".env")
+        # token = config["RUN_ID"]
         token = os.getenv("RUN_ID")
         print(f"token={token}")
 
