@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "blankly-utils"
-version = "0.1.1"
+version = "0.1.2"
 description = "Trading stategy utils for Blankly Finance"
 authors = ["c0indev3l <working4coins@gmail.com>"]
 readme = "README.md"
@@ -19,6 +19,7 @@ dash-bootstrap-components = "^1.4.2"
 pydantic = "^2.2.1"
 
 [tool.poetry.scripts]
+display_backtest = "blankly_utils.display_backtest:main"
 preprocessing = "blankly_utils.preprocessing:main"
 postprocessing = "blankly_utils.postprocessing:main"
 store_to_db = "blankly_utils.monitor.cli.store_to_db:main"
