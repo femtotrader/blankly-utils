@@ -2,14 +2,14 @@ import warnings
 import pandas as pd
 
 
-def get_account_values(interface, quoted):
+def get_account_values(interface, quote):
     df = pd.DataFrame(interface.account).transpose()
 
     df = df[(df["available"] > 0) | (df["hold"] > 0)]
 
     for base in df.index:
-        symbol = f"{base}-{quoted}"
-        if base != quoted:
+        symbol = f"{base}-{quote}"
+        if base != quote:
             try:
                 price = interface.get_price(symbol)
             except:

@@ -44,7 +44,7 @@ print(VALID_USERNAME_PASSWORD_PAIRS)
     help="DB uri to send account values",
 )
 @click.option(
-    "--quoted",
+    "--quote",
     default="USDT",
 )
 @click.option(
@@ -61,7 +61,7 @@ print(VALID_USERNAME_PASSWORD_PAIRS)
     "See https://dash-bootstrap-components.opensource.faculty.ai/docs/themes/explorer/ "
     "for more information",
 )
-def main(host, port, db_uri, quoted, refresh_sec, theme):
+def main(host, port, db_uri, quote, refresh_sec, theme):
     # print("main")
     # Incorporate data
 
@@ -208,7 +208,7 @@ def main(host, port, db_uri, quoted, refresh_sec, theme):
                         "type": "lines",
                     },
                 ],
-                "layout": {"title": f"{graph} ({quoted})"},
+                "layout": {"title": f"{graph} ({quote})"},
             }
         elif graph in ["Available amount", "Hold amount", "Available", "Hold"]:
             ts = pd.Series(0.0, index=dff.index)

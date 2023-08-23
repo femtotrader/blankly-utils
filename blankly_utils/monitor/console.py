@@ -6,9 +6,9 @@ from .utils import get_account_values
 
 
 class MonitorConsole:
-    def __init__(self, strategy, quoted, delay_secs=5):
+    def __init__(self, strategy, quote, delay_secs=5):
         self.strategy = strategy
-        self.quoted = quoted
+        self.quote = quote
         self.delay_secs = delay_secs
 
     def start(self):
@@ -23,7 +23,7 @@ class MonitorConsole:
             # event.wait()
             # event.clear()
 
-            df = get_account_values(self.strategy.interface, self.quoted)
+            df = get_account_values(self.strategy.interface, self.quote)
             account_values[time.time()] = df
 
             print(df)

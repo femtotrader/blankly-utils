@@ -10,7 +10,7 @@ from blankly import Strategy
 from .utils import get_account_values
 
 
-def MakeServerRequestHandler(token: str, strategy: Strategy, quoted: str):
+def MakeServerRequestHandler(token: str, strategy: Strategy, quote: str):
     title = "Monitor"
 
     class ServerRequestHandler(BaseHTTPRequestHandler):
@@ -44,7 +44,7 @@ def MakeServerRequestHandler(token: str, strategy: Strategy, quoted: str):
                     self.send_response(200)
                     self.send_header("Content-type", "text/json")
                     self.end_headers()
-                    df = get_account_values(strategy.interface, quoted)
+                    df = get_account_values(strategy.interface, quote)
                     self.wfile.write(
                         bytes(
                             json.dumps(df.transpose().to_dict(orient="dict")), "utf-8"
@@ -55,7 +55,7 @@ def MakeServerRequestHandler(token: str, strategy: Strategy, quoted: str):
                     self.send_response(200)
                     self.send_header("Content-type", "text/json")
                     self.end_headers()
-                    df = get_account_values(strategy.interface, quoted)
+                    df = get_account_values(strategy.interface, quote)
                     df_sum = df[["available_amount", "hold_amount"]].sum()
                     self.wfile.write(bytes(json.dumps(df_sum.to_dict()), "utf-8"))
                     return
@@ -93,10 +93,10 @@ def MakeServerRequestHandler(token: str, strategy: Strategy, quoted: str):
 
 class MonitorWebServer:
     def __init__(
-        self, strategy: Strategy, quoted: str, host="0.0.0.0", port=8000, token=None
+        self, strategy: Strategy, quote: str, host="0.0.0.0", port=8000, token=None
     ):
         self.strategy = strategy
-        self.quoted = quoted
+        self.quote = quote
 
         self.host = host
         self.port = port
@@ -113,7 +113,7 @@ class MonitorWebServer:
 
     def process(self):
         MyServerRequestHandler = MakeServerRequestHandler(
-            self.token, self.strategy, self.quoted
+            self.token, self.strategy, self.quote
         )
         httpd = HTTPServer((self.host, self.port), MyServerRequestHandler)
         httpd.serve_forever()
