@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "blankly-utils"
-version = "0.1.2"
+version = "0.1.3"
 description = "Trading stategy utils for Blankly Finance"
 authors = ["c0indev3l <working4coins@gmail.com>"]
 readme = "README.md"
