@@ -128,7 +128,7 @@ def main(host, port, refresh_sec, theme):
         backtest_paths = sorted(filter(lambda p: p.is_dir(), path.glob("*")))
         #backtest_names = [path.parts[-1] for path in backtest_paths]
         backtest_names = []
-        # filter backter with cumulative returns != 0.0
+        # filter backtests with cumulative returns != 0.0
         for p in backtest_paths:
             backtest = p.parts[-1]
             df_metrics = load_backtest_metrics(backtest)
