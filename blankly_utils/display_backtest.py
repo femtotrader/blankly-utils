@@ -177,7 +177,8 @@ def main(host, port, refresh_sec, theme):
     # app = Dash(__name__)
 
     # Setup basic authentification
-    auth = dash_auth.BasicAuth(app, VALID_USERNAME_PASSWORD_PAIRS)
+    secret_key = os.getenv("WEB_UI_SECRET_KEY", default="Super Secret Key")
+    auth = dash_auth.BasicAuth(app, VALID_USERNAME_PASSWORD_PAIRS, secret_key=secret_key)
 
     # App layout
     app.layout = serve_layout
