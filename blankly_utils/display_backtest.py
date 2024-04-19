@@ -61,6 +61,13 @@ def main(host, port, refresh_sec, theme):
 
     path = Path("output")
 
+    def load_backtest_metrics(backtest):
+        fname = path / backtest / "results_metrics.json"
+        df_metrics = pd.read_json(fname)
+        df_metrics = df_metrics.loc[["display_name", "value"], :].transpose()
+        df_metrics.columns = ["Metrics", "Value"]
+        return df_metrics
+
     def load_backtest(backtest):
         print(f'load_backtest("{backtest}")')
         global backtest_results
@@ -119,7 +126,14 @@ def main(host, port, refresh_sec, theme):
         now = datetime.datetime.utcnow()
 
         backtest_paths = sorted(filter(lambda p: p.is_dir(), path.glob("*")))
-        backtest_names = [path.parts[-1] for path in backtest_paths]
+        #backtest_names = [path.parts[-1] for path in backtest_paths]
+        backtest_names = []
+        # filter backter with cumulative returns != 0.0
+        for p in backtest_paths:
+            backtest = p.parts[-1]
+            df_metrics = load_backtest_metrics(backtest)
+            if df_metrics["Value"]["cum_returns"] != 0.0:
+                backtest_names.append(backtest)
 
         return html.Div(
             [
