@@ -20,6 +20,7 @@ load_dotenv()
 Create a .env file like:
 WEB_UI_ADMIN_USERNAME=YourAdminUsername
 WEB_UI_ADMIN_PASSWORD=YourAdminPassword
+WEB_UI_SECRET_KEY=SuperSecretKey
 """
 VALID_USERNAME_PASSWORD_PAIRS = {
     os.getenv("WEB_UI_ADMIN_USERNAME", default="admin"): os.getenv(
