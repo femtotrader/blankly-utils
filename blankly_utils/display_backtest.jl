@@ -156,7 +156,7 @@ function serve_layout()
             #disabled=true
         ),
         dcc_dropdown(
-            options=[],
+            options=String[],
             value="",
             id="dropdown-base-selection",
             #disabled=true
@@ -261,7 +261,7 @@ function main()
         #    df = load_data_trades_created(backtest)
         #    return  Dict{String,String}(), [], nothing
         else
-            return Dict("display"=>"none"), [], nothing
+            return Dict("display"=>"none"), String[], nothing
         end
     end
 
