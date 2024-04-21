@@ -23,9 +23,8 @@ struct BacktestResults
     trades_limits_executed
 end
 
-# Create Dash application
 path = "output"
-
+refresh_sec = 300  # seconds
 
 function create_app(theme)
     bc_theme = getfield(dbc_themes, Symbol(theme))
@@ -118,12 +117,13 @@ function get_backtest_names(backtest_paths::Vector)
     return backtest_names
 end
 
+
 function serve_layout()
     dt_now = now(UTC)
     backtest_paths = get_backtest_paths(path)
     backtest_names = get_backtest_names(backtest_paths)
     return html_div([
-        # html_meta(httpEquiv="refresh", content=String(refresh_sec)),
+        html_meta(httpEquiv="refresh", content=string(refresh_sec)),
         html_h1(children="Display backtests", style=Dict("textAlign"=>"center")),
         html_div(children="Choose backtest"),
         html_br(),
@@ -182,7 +182,7 @@ function parse_commandline()
             default = 8000
         "--refresh-sec"
             arg_type = Int
-            default = 300
+            default = refresh_sec
         "--theme"
             help = "A Bootswatch theme among CERULEAN, COSMO, CYBORG, \
 DARKLY, FLATLY, JOURNAL, LITERA, LUMEN, LUX, MATERIA, \
@@ -202,9 +202,10 @@ function main()
     for (arg,val) in parsed_args
         println("  $arg  =>  $val")
     end
-    global app
+    global app, refresh_sec
 
     app = create_app(parsed_args["theme"])
+    refresh_sec = parsed_args["refresh-sec"]
     # Layout definition with connected data points
     app.layout = serve_layout
 
