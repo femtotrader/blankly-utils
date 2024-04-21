@@ -25,6 +25,7 @@ end
 
 path = "output"
 refresh_sec = 300  # seconds
+const s_themes = join(map(s -> "\"" * string(s) * "\"", keys(dbc_themes)), ", ")
 
 function create_app(theme)
     bc_theme = getfield(dbc_themes, Symbol(theme))
@@ -184,10 +185,7 @@ function parse_commandline()
             arg_type = Int
             default = refresh_sec
         "--theme"
-            help = "A Bootswatch theme among CERULEAN, COSMO, CYBORG, \
-DARKLY, FLATLY, JOURNAL, LITERA, LUMEN, LUX, MATERIA, \
-MINTY, MORPH, PULSE, QUARTZ, SANDSTONE, SIMPLEX, SKETCHY, \
-SLATE, SOLAR, SPACELAB, SUPERHERO, UNITED, VAPOR, YETI, ZEPHYR. \
+            help = "A Bootswatch theme among $(s_themes). \
 See https://dash-bootstrap-components.opensource.faculty.ai/docs/themes/explorer/ \
 for more information"
             default = "YETI"
