@@ -7,6 +7,11 @@ using DataFrames
 using XLSX
 using Dash
 
+
+const hidden_style = Dict("display" => "none")
+const empty_style = Dict{String, String}()
+const empty_figure = Dict{String, String}()
+
 # Create Dash application
 app = dash()
 path = "output"
@@ -127,7 +132,7 @@ function serve_layout()
         html_br(),
         dash_datatable(id="datatable-metrics"),
         html_br(),
-        html_button(children="Load backtest results", id="but-load", n_clicks=0),
+        html_button(children="Load backtest results", id="but-load", n_clicks=0, disabled=true),
         html_br(),
         dcc_dropdown(
             options=[
@@ -139,14 +144,16 @@ function serve_layout()
             ],
             value="History",
             id="dropdown-data-selection",
+            #disabled=true
         ),
         dcc_dropdown(
             options=[],
             value="",
             id="dropdown-base-selection",
+            #disabled=true
         ),
         html_br(),
-        dcc_graph(id="ts-graph"),
+        dcc_graph(id="ts-graph", style=hidden_style),
         dash_datatable(id="datatable-values", page_size=20),
         html_p("Last update: $(dt_now)", style=Dict("textAlign"=>"right"))
     ])
@@ -159,6 +166,7 @@ app.layout = serve_layout
 callback!(
     app,
     Output("datatable-metrics", "data"),
+    Output("but-load", "disabled"),
     Input("dropdown-backtest-selection", "value"),
 ) do _backtest
     global backtest
@@ -166,7 +174,7 @@ callback!(
     println("update_datatable_metrics_simple")
     metrics = load_backtest_metrics(backtest)
     data = [(Metrics=value["display_name"], Value=value["value"]) for (key, value) in metrics]
-    return data
+    return data, false
 end
 
 callback!(
@@ -217,11 +225,14 @@ callback!(
     Output("ts-graph", "figure"),
     Output("ts-graph", "style"),
     Output("datatable-values", "data"),
-    Input("dropdown-backtest-selection", "value"),
+    #Input("dropdown-data-selection", "disabled"),
+    #Input("dropdown-base-selection", "disabled"),
+    #Input("dropdown-backtest-selection", "value"),
     Input("dropdown-data-selection", "value"),
     Input("dropdown-base-selection", "value"),
     prevent_initial_call=true
-) do backtest, data, base
+#) do backtest, data, base
+) do data, base
     println("update_datatable_values_data")
     if data == "History"
         #backtest_results.history[:value] = backtest_results.history[:value].round(2)
@@ -235,63 +246,57 @@ callback!(
             ],
             "layout" => Dict("title" => "$(data) ($(base))"),
         )
-        graph_style = Dict{String, String}()
-        datatable_data = []
-        #datatable_data = [row for row in reverse(eachrow(backtest_results.history))]
-        println("Ready")
-        return figure, graph_style, datatable_data
-    end
-
-    #=
-    elif data == "Trades created"
+        datatable_data = [NamedTuple(row) for row in reverse(eachrow(backtest_results.history))]
+        println(dash_datatable)
+        return figure, empty_style, datatable_data
+    elseif data == "Trades created"
         figure = Dict{String, String}()
-        graph_style = Dict("display" => "none")
-        datatable_data = backtest_results.trades_created.to_dict(orient="records")
-        return figure, graph_style, datatable_data
-    elif data == "Trades executed market orders"
-        figure = Dict{String, String}()
-        graph_style = Dict("display" => "none")
-        df = pd.merge(
+        datatable_data = [NamedTuple(row) for row in eachrow(backtest_results.trades_created)]
+        return figure, hidden_style, datatable_data
+    elseif data == "Trades executed market orders"
+        figure = empty_figure
+        graph_style = hidden_style
+        df = innerjoin(
             backtest_results.trades_created,
             backtest_results.trades_executed_market_orders,
-            on="id",
+            on=:id,
         )
-        datatable_data = df.to_dict(orient="records")
+        datatable_data = [NamedTuple(row) for row in eachrow(df)]
         return figure, graph_style, datatable_data
-    elif data == "Trades limits canceled"
-        figure = Dict{String, String}()
-        graph_style = Dict("display" => "none")
-        if "id" in names(backtest_results.trades_limits_canceled)
-            df = pd.merge(
+    elseif data == "Trades limits canceled"
+        figure = empty_figure
+        graph_style = hidden_style
+        if :id in names(backtest_results.trades_limits_canceled)
+            df = innerjoin(
                 backtest_results.trades_created,
                 backtest_results.trades_limits_canceled,
-                on="id",
+                on=:id,
             )
         else
             df = backtest_results.trades_limits_canceled
         end
-        datatable_data = df.to_dict(orient="records")
+        datatable_data = [NamedTuple(row) for row in eachrow(df)]
         return figure, graph_style, datatable_data
-    elif data == "Trades limits executed"
-        figure = Dict{String, String}()
-        graph_style = Dict("display" => "none")
-        if "id" in names(backtest_results.trades_limits_executed):
-            df = pd.merge(
+    elseif data == "Trades limits executed"
+        figure = empty_figure
+        graph_style = hidden_style
+        if :id in names(backtest_results.trades_limits_executed)
+            df = innerjoin(
                 backtest_results.trades_created,
                 backtest_results.trades_limits_executed,
-                on="id",
+                on=:id,
             )
-        else:
+        else
             df = backtest_results.trades_limits_executed
-        datatable_data = df.to_dict(orient="records")
+        end
+        datatable_data = [NamedTuple(row) for row in eachrow(df)]
         return figure, graph_style, datatable_data
-
-    figure = Dict{String, String}()
-    graph_style = Dict("display" => "none")
-    datatable_data = []
-    return figure, graph_style, datatable_data
-
-    =#
+    else
+        figure = empty_figure
+        graph_style = hidden_style
+        datatable_data = []
+        return figure, graph_style, datatable_data    
+    end
 
 end
 
