@@ -1,4 +1,4 @@
-# WIP: Not currently totally usable
+# WIP: Not usable
 
 using Dates
 using Glob
@@ -224,9 +224,7 @@ callback!(
 ) do backtest, data, base
     println("update_datatable_values_data")
     if data == "History"
-        #backtest_results.history[:value] = backtest_results.history[:value].round(
-        #    2
-        #)
+        #backtest_results.history[:value] = backtest_results.history[:value].round(2)
         figure = Dict(
             "data" => [
                 Dict(
@@ -239,7 +237,7 @@ callback!(
         )
         graph_style = Dict{String, String}()
         datatable_data = []
-        # datatable_data = [row for row in reverse(eachrow(backtest_results.history))]
+        #datatable_data = [row for row in reverse(eachrow(backtest_results.history))]
         println("Ready")
         return figure, graph_style, datatable_data
     end
@@ -247,12 +245,12 @@ callback!(
     #=
     elif data == "Trades created"
         figure = Dict{String, String}()
-        graph_style = {"display": "none"}
+        graph_style = Dict("display" => "none")
         datatable_data = backtest_results.trades_created.to_dict(orient="records")
         return figure, graph_style, datatable_data
     elif data == "Trades executed market orders"
         figure = Dict{String, String}()
-        graph_style = {"display": "none"}
+        graph_style = Dict("display" => "none")
         df = pd.merge(
             backtest_results.trades_created,
             backtest_results.trades_executed_market_orders,
@@ -262,15 +260,16 @@ callback!(
         return figure, graph_style, datatable_data
     elif data == "Trades limits canceled"
         figure = Dict{String, String}()
-        graph_style = {"display": "none"}
-        if "id" in backtest_results.trades_limits_canceled.columns:
+        graph_style = Dict("display" => "none")
+        if "id" in names(backtest_results.trades_limits_canceled)
             df = pd.merge(
                 backtest_results.trades_created,
                 backtest_results.trades_limits_canceled,
                 on="id",
             )
-        else:
+        else
             df = backtest_results.trades_limits_canceled
+        end
         datatable_data = df.to_dict(orient="records")
         return figure, graph_style, datatable_data
     elif data == "Trades limits executed"
@@ -288,7 +287,7 @@ callback!(
         return figure, graph_style, datatable_data
 
     figure = Dict{String, String}()
-    graph_style = {"display": "none"}
+    graph_style = Dict("display" => "none")
     datatable_data = []
     return figure, graph_style, datatable_data
 
