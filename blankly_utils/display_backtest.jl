@@ -41,7 +41,7 @@ end
 struct BacktestResults
     results
     metrics
-    #history
+    history
     #trades_created
     #trades_executed_market_orders
     #trades_limits_canceled
@@ -54,10 +54,14 @@ function load_backtest(backtest::AbstractString)
     results = load_backtest_results(backtest)
     metrics = load_backtest_metrics(backtest)
 
-    #fname = joinpath(path, backtest, "results.json")
+    fname = joinpath(path, backtest, "results_history.xlsx")
+    table = XLSX.readtable(fname, "Sheet1")
+    df_history = DataFrame(table)
 
     global backtest_results
-    backtest_results = BacktestResults(results, metrics)
+    backtest_results = BacktestResults(results, metrics, df_history)
+
+    println("loading completed")
 
     return backtest_results
 end
