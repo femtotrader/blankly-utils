@@ -1,20 +1,38 @@
 # WIP: Not usable
 
+using ArgParse
 using Dates
 using Glob
 using JSON
 using DataFrames
 using XLSX
 using Dash
-
+using DashBootstrapComponents
 
 const hidden_style = Dict("display" => "none")
 const empty_style = Dict{String, String}()
 const empty_figure = Dict{String, String}()
 
+struct BacktestResults
+    results
+    metrics
+    history
+    trades_created
+    trades_executed_market_orders
+    trades_limits_canceled
+    trades_limits_executed
+end
+
 # Create Dash application
-app = dash()
 path = "output"
+
+
+function create_app(theme)
+    bc_theme = getfield(dbc_themes, Symbol(theme))
+    app = dash(external_stylesheets=[bc_theme])
+    return app
+end
+
 
 function load_backtest_results(backtest::AbstractString)
     fname = joinpath(path, backtest, "results.json")
@@ -40,16 +58,6 @@ function load_backtest_metrics(backtest::AbstractString)
     # df_metrics = DataFrame(Dict("Metrics" => names, "Value" => values))
     # 
     # return df_metrics
-end
-
-struct BacktestResults
-    results
-    metrics
-    history
-    trades_created
-    trades_executed_market_orders
-    trades_limits_canceled
-    trades_limits_executed
 end
 
 function load_backtest_all_results(backtest::AbstractString)
@@ -159,146 +167,187 @@ function serve_layout()
     ])
 end
 
-# Layout definition with connected data points
-app.layout = serve_layout
-
-# Callbacks
-callback!(
-    app,
-    Output("datatable-metrics", "data"),
-    Output("but-load", "disabled"),
-    Input("dropdown-backtest-selection", "value"),
-) do _backtest
-    global backtest
-    backtest = _backtest
-    println("update_datatable_metrics_simple")
-    metrics = load_backtest_metrics(backtest)
-    data = [(Metrics=value["display_name"], Value=value["value"]) for (key, value) in metrics]
-    return data, false
-end
-
-callback!(
-    app,
-    Output("div-results", "children"),
-    Output("dropdown-data-selection", "value"),
-    Input("but-load", "n_clicks"),
-    prevent_initial_call=true
-) do n_clicks
-    load_backtest_all_results(backtest)
-    exchange = backtest_results.results["exchange"]
-    quote_currency = backtest_results.results["quote_currency"]
-    start_time = unix2datetime(backtest_results.results["start_time"])
-    stop_time = unix2datetime(backtest_results.results["stop_time"])
-    stats = "Backtest from $(start_time) to $(stop_time) Exchange: $(exchange) Quote currency: $(quote_currency)"
-    return stats, "History"
-end
-
-callback!(
-    app,
-    Output("dropdown-base-selection", "style"),
-    Output("dropdown-base-selection", "options"),
-    Output("dropdown-base-selection", "value"),
-    #Input("dropdown-backtest-selection", "value"),
-    Input("dropdown-data-selection", "value"),
-    prevent_initial_call=true
-) do data
-    println("update_ts_graph_figure")
-    println(data)
-    if data == "History"
-        cols = names(backtest_results.history)[2:end]
-        return (
-            Dict{String,String}(),
-            cols,
-            cols[end],
-        )
-    # elseif data == "Trades created":
-    #    df = load_data_trades_created(backtest)
-    #    return  Dict{String,String}(), [], nothing
-    else
-        return Dict("display"=>"none"), [], nothing
-    end
-end
 
 
-callback!(
-    app,
-    Output("ts-graph", "figure"),
-    Output("ts-graph", "style"),
-    Output("datatable-values", "data"),
-    #Input("dropdown-data-selection", "disabled"),
-    #Input("dropdown-base-selection", "disabled"),
-    #Input("dropdown-backtest-selection", "value"),
-    Input("dropdown-data-selection", "value"),
-    Input("dropdown-base-selection", "value"),
-    prevent_initial_call=true
-#) do backtest, data, base
-) do data, base
-    println("update_datatable_values_data")
-    if data == "History"
-        #backtest_results.history[:value] = backtest_results.history[:value].round(2)
-        figure = Dict(
-            "data" => [
-                Dict(
-                    "x" => backtest_results.history[!, :time],
-                    "y" => backtest_results.history[!, base],
-                    "type" => "lines",
-                ),
-            ],
-            "layout" => Dict("title" => "$(data) ($(base))"),
-        )
-        datatable_data = [NamedTuple(row) for row in reverse(eachrow(backtest_results.history))]
-        println(dash_datatable)
-        return figure, empty_style, datatable_data
-    elseif data == "Trades created"
-        figure = Dict{String, String}()
-        datatable_data = [NamedTuple(row) for row in eachrow(backtest_results.trades_created)]
-        return figure, hidden_style, datatable_data
-    elseif data == "Trades executed market orders"
-        figure = empty_figure
-        graph_style = hidden_style
-        df = innerjoin(
-            backtest_results.trades_created,
-            backtest_results.trades_executed_market_orders,
-            on=:id,
-        )
-        datatable_data = [NamedTuple(row) for row in eachrow(df)]
-        return figure, graph_style, datatable_data
-    elseif data == "Trades limits canceled"
-        figure = empty_figure
-        graph_style = hidden_style
-        if :id in names(backtest_results.trades_limits_canceled)
-            df = innerjoin(
-                backtest_results.trades_created,
-                backtest_results.trades_limits_canceled,
-                on=:id,
-            )
-        else
-            df = backtest_results.trades_limits_canceled
-        end
-        datatable_data = [NamedTuple(row) for row in eachrow(df)]
-        return figure, graph_style, datatable_data
-    elseif data == "Trades limits executed"
-        figure = empty_figure
-        graph_style = hidden_style
-        if :id in names(backtest_results.trades_limits_executed)
-            df = innerjoin(
-                backtest_results.trades_created,
-                backtest_results.trades_limits_executed,
-                on=:id,
-            )
-        else
-            df = backtest_results.trades_limits_executed
-        end
-        datatable_data = [NamedTuple(row) for row in eachrow(df)]
-        return figure, graph_style, datatable_data
-    else
-        figure = empty_figure
-        graph_style = hidden_style
-        datatable_data = []
-        return figure, graph_style, datatable_data    
+function parse_commandline()
+    s = ArgParseSettings()
+
+    @add_arg_table s begin
+        "--host", "-H"
+            help = "host (0.0.0.0=all, 127.0.0.1=localhost)"
+            default = "0.0.0.0"
+        "--port", "-p"
+            help = "port (8000 or other)"
+            arg_type = Int
+            default = 8000
+        "--refresh-sec"
+            arg_type = Int
+            default = 300
+        "--theme"
+            help = "A Bootswatch theme among CERULEAN, COSMO, CYBORG, \
+DARKLY, FLATLY, JOURNAL, LITERA, LUMEN, LUX, MATERIA, \
+MINTY, MORPH, PULSE, QUARTZ, SANDSTONE, SIMPLEX, SKETCHY, \
+SLATE, SOLAR, SPACELAB, SUPERHERO, UNITED, VAPOR, YETI, ZEPHYR. \
+See https://dash-bootstrap-components.opensource.faculty.ai/docs/themes/explorer/ \
+for more information"
+            default = "YETI"
     end
 
+    return parse_args(s)
 end
 
-# Run the Dash server
-Dash.run_server(app, "0.0.0.0", 8000; debug=true)
+function main()
+    parsed_args = parse_commandline()
+    println("Parsed args:")
+    for (arg,val) in parsed_args
+        println("  $arg  =>  $val")
+    end
+    global app
+
+    app = create_app(parsed_args["theme"])
+    # Layout definition with connected data points
+    app.layout = serve_layout
+
+    # Callbacks
+    callback!(
+        app,
+        Output("datatable-metrics", "data"),
+        Output("but-load", "disabled"),
+        Input("dropdown-backtest-selection", "value"),
+    ) do _backtest
+        global backtest
+        backtest = _backtest
+        println("update_datatable_metrics_simple")
+        metrics = load_backtest_metrics(backtest)
+        data = [(Metrics=value["display_name"], Value=value["value"]) for (key, value) in metrics]
+        return data, false
+    end
+
+    callback!(
+        app,
+        Output("div-results", "children"),
+        Output("dropdown-data-selection", "value"),
+        Input("but-load", "n_clicks"),
+        prevent_initial_call=true
+    ) do n_clicks
+        load_backtest_all_results(backtest)
+        exchange = backtest_results.results["exchange"]
+        quote_currency = backtest_results.results["quote_currency"]
+        start_time = unix2datetime(backtest_results.results["start_time"])
+        stop_time = unix2datetime(backtest_results.results["stop_time"])
+        stats = "Backtest from $(start_time) to $(stop_time) Exchange: $(exchange) Quote currency: $(quote_currency)"
+        return stats, "History"
+    end
+
+    callback!(
+        app,
+        Output("dropdown-base-selection", "style"),
+        Output("dropdown-base-selection", "options"),
+        Output("dropdown-base-selection", "value"),
+        #Input("dropdown-backtest-selection", "value"),
+        Input("dropdown-data-selection", "value"),
+        prevent_initial_call=true
+    ) do data
+        println("update_ts_graph_figure")
+        println(data)
+        if data == "History"
+            cols = names(backtest_results.history)[2:end]
+            return (
+                Dict{String,String}(),
+                cols,
+                cols[end],
+            )
+        # elseif data == "Trades created":
+        #    df = load_data_trades_created(backtest)
+        #    return  Dict{String,String}(), [], nothing
+        else
+            return Dict("display"=>"none"), [], nothing
+        end
+    end
+
+
+    callback!(
+        app,
+        Output("ts-graph", "figure"),
+        Output("ts-graph", "style"),
+        Output("datatable-values", "data"),
+        #Input("dropdown-data-selection", "disabled"),
+        #Input("dropdown-base-selection", "disabled"),
+        #Input("dropdown-backtest-selection", "value"),
+        Input("dropdown-data-selection", "value"),
+        Input("dropdown-base-selection", "value"),
+        prevent_initial_call=true
+    #) do backtest, data, base
+    ) do data, base
+        println("update_datatable_values_data")
+        if data == "History"
+            #backtest_results.history[:value] = backtest_results.history[:value].round(2)
+            figure = Dict(
+                "data" => [
+                    Dict(
+                        "x" => backtest_results.history[!, :time],
+                        "y" => backtest_results.history[!, base],
+                        "type" => "lines",
+                    ),
+                ],
+                "layout" => Dict("title" => "$(data) ($(base))"),
+            )
+            datatable_data = [NamedTuple(row) for row in reverse(eachrow(backtest_results.history))]
+            println(dash_datatable)
+            return figure, empty_style, datatable_data
+        elseif data == "Trades created"
+            figure = Dict{String, String}()
+            datatable_data = [NamedTuple(row) for row in eachrow(backtest_results.trades_created)]
+            return figure, hidden_style, datatable_data
+        elseif data == "Trades executed market orders"
+            figure = empty_figure
+            graph_style = hidden_style
+            df = innerjoin(
+                backtest_results.trades_created,
+                backtest_results.trades_executed_market_orders,
+                on=:id,
+            )
+            datatable_data = [NamedTuple(row) for row in eachrow(df)]
+            return figure, graph_style, datatable_data
+        elseif data == "Trades limits canceled"
+            figure = empty_figure
+            graph_style = hidden_style
+            if :id in names(backtest_results.trades_limits_canceled)
+                df = innerjoin(
+                    backtest_results.trades_created,
+                    backtest_results.trades_limits_canceled,
+                    on=:id,
+                )
+            else
+                df = backtest_results.trades_limits_canceled
+            end
+            datatable_data = [NamedTuple(row) for row in eachrow(df)]
+            return figure, graph_style, datatable_data
+        elseif data == "Trades limits executed"
+            figure = empty_figure
+            graph_style = hidden_style
+            if :id in names(backtest_results.trades_limits_executed)
+                df = innerjoin(
+                    backtest_results.trades_created,
+                    backtest_results.trades_limits_executed,
+                    on=:id,
+                )
+            else
+                df = backtest_results.trades_limits_executed
+            end
+            datatable_data = [NamedTuple(row) for row in eachrow(df)]
+            return figure, graph_style, datatable_data
+        else
+            figure = empty_figure
+            graph_style = hidden_style
+            datatable_data = []
+            return figure, graph_style, datatable_data    
+        end
+
+end
+
+    # Run the Dash server
+    Dash.run_server(app, parsed_args["host"], parsed_args["port"]; debug=true)
+end
+
+main()
