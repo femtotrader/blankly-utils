@@ -66,19 +66,19 @@ function load_backtest_all_results(backtest::AbstractString)
     metrics = load_backtest_metrics(backtest)
 
     fname = joinpath(path, backtest, "results_history.xlsx")
-    table = XLSX.readtable(fname, "Sheet1")
+    table = XLSX.readtable(fname, "Sheet1", infer_eltypes=true)
     df_history = DataFrame(table)
 
     fname = joinpath(path, backtest, "results_trades_created.xlsx")
-    df_trades_created = DataFrame(XLSX.readtable(fname, "Sheet1"))
+    df_trades_created = DataFrame(XLSX.readtable(fname, "Sheet1", infer_eltypes=true))
 
     fname = joinpath(path, backtest, "results_trades_executed_market_orders.xlsx")
-    df_trades_executed_market_orders = DataFrame(XLSX.readtable(fname, "Sheet1"))
+    df_trades_executed_market_orders = DataFrame(XLSX.readtable(fname, "Sheet1", infer_eltypes=true))
 
     fname = joinpath(path, backtest, "results_trades_limits_canceled.xlsx")
     df_trades_limits_canceled = DataFrame()
     try
-        df_trades_limits_canceled = DataFrame(XLSX.readtable(fname, "Sheet1"))
+        df_trades_limits_canceled = DataFrame(XLSX.readtable(fname, "Sheet1", infer_eltypes=true))
     catch e
         println(e)
     end
@@ -86,7 +86,7 @@ function load_backtest_all_results(backtest::AbstractString)
     fname = joinpath(path, backtest, "results_trades_limits_executed.xlsx")
     df_trades_limits_executed = DataFrame()
     try
-        df_trades_limits_executed = DataFrame(XLSX.readtable(fname, "Sheet1"))
+        df_trades_limits_executed = DataFrame(XLSX.readtable(fname, "Sheet1", infer_eltypes=true))
     catch e
         println(e)
     end
@@ -245,11 +245,12 @@ function main()
         Output("dropdown-base-selection", "style"),
         Output("dropdown-base-selection", "options"),
         Output("dropdown-base-selection", "value"),
-        #Input("dropdown-backtest-selection", "value"),
         Input("dropdown-data-selection", "value"),
+        State("dropdown-backtest-selection", "value"),
         prevent_initial_call=true
-    ) do data
+    ) do data, backtest
         println("update_ts_graph_figure")
+        println(backtest)
         println(data)
         if data == "History"
             cols = names(backtest_results.history)[2:end]
